@@ -16,10 +16,16 @@ batch_size=64
 lr=0.001
 num_classes=10
 
+'''设置预处理方法,包括将PILImage类型变为Tensor和标准化'''
+transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
+    ])
 '''获取数据集'''
-train_dataset=torchvision.datasets.CIFAR10(root='../DataSet/',train=True,download=False,transform=transforms.ToTensor())
+'''图像本来是(H,W,C),经过ToTensor()后，变为(C,H,W)'''
+train_dataset=torchvision.datasets.CIFAR10(root='../DataSet/',train=True,download=False,transform=transform)
 
-test_dataset=torchvision.datasets.CIFAR10(root='../DataSet/',train=False,download=False,transform=transforms.ToTensor())
+test_dataset=torchvision.datasets.CIFAR10(root='../DataSet/',train=False,download=False,transform=transform)
 
 '''装载数据'''
 train_loader=torch.utils.data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=True)
@@ -79,7 +85,7 @@ class LeNet(nn.Module):
     
 model = LeNet(num_classes)
 
-'''设置损失函数'''
+'''设置损失函数,CrossEntropyLoss()已经包含了SoftMax'''
 criterion=nn.CrossEntropyLoss()
 
 '''设置优化器'''
@@ -88,7 +94,7 @@ optimizer=torch.optim.Adam(model.parameters(),lr=lr)
 '''开始训练'''
 total_step = len(train_loader)
 for epoch in range(10):
-    for i, (images, labels) in enumerate(train_loader):
+    for i, (images, labels) in enumerate(train_loader,start=0):
 
         # Forward pass
         outputs = model(images)
@@ -103,3 +109,13 @@ for epoch in range(10):
             print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                    .format(epoch+1, 10, i+1, total_step, loss.item()))
 
+with torch.no_grad():
+    correct = 0
+    total = 0
+    for images, labels in test_loader:
+        outputs = model(images)
+        predicted = torch.max(outputs.data, 1)[1]
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
