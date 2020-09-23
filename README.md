@@ -15,4 +15,4 @@ Welcome Eorsion's GitHub
 
 7.ResNet
 
-8.GoogleNet
+8.GoogleNet(完成)
